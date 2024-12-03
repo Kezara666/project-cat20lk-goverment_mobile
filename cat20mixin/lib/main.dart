@@ -1,125 +1,258 @@
-import 'package:flutter/material.dart';
+import 'dart:ui';
 
-void main() {
-  runApp(const MyApp());
+import 'package:cat20mixing/pages/login/login.dart';
+import 'package:cat20mixing/pages/mix_income/list_order.dart';
+import 'package:cat20mixing/services/user_managmenet_controller/user_controller.dart';
+import 'package:cat20mixing/widgets/glass_bottom_nav.dart';
+import 'package:flutter/material.dart';
+import 'package:cat20mixing/providers/init_controllers.dart' as di;
+import 'package:get/get.dart';
+import 'package:device_preview/device_preview.dart';
+import 'package:glassmorphism/glassmorphism.dart';
+import 'pages/mix_income/add_order_page.dart';
+
+void main() async {
+  await di.init();
+  Get.put(UserController()); // Ensure persistent controller initialization
+  runApp(
+    DevicePreview(
+      enabled: true,
+      builder: (context) => GetMaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: LoginCheck(),
+      ),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class LoginCheck extends StatelessWidget {
+  final UserController userController = Get.find();
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+    return Obx(() {
+      return userController.currentUserId.value.isEmpty
+          ? LoginScreen()
+          : MainScreen();
     });
   }
+}
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndexMainDrawer = 0;
+  final UserController userController = Get.find();
+
+  final List<Widget> _pages = [
+    OrderListPage(),
+    CreateMixIncomeOrderPage(),
+    AssessmentPage(),
+  ];
+
+  _buildDrawerItem(int index, IconData icon, String title) {
+  bool isSelected = _currentIndexMainDrawer == index;
+  return isSelected
+      ? Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2), // Glass effect for selected icon
+            borderRadius: BorderRadius.circular(8.0), // Optional: rounded corners
+          ),
+          child: ListTile(
+            leading: Icon(icon, color: Colors.white),
+            title: Text(
+              title,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              setState(() {
+                _currentIndexMainDrawer = index;
+              });
+            },
+          ),
+        )
+      : ListTile(
+          leading: Icon(icon, color: Colors.white),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            setState(() {
+              _currentIndexMainDrawer = index;
+            });
+          },
+        );
+}
+
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final userName = userController.currentUserName.value;
+
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+      drawer: Drawer(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color.fromARGB(
+                    255, 16, 82, 214), // Light blue color (like noon light)
+                Color.fromARGB(255, 219, 13, 174),
+                // Slightly lighter blue
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              stops: [0.0, 1.0],
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+            borderRadius:
+                BorderRadius.circular(20), // Optional, for rounded corners
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black
+                    .withOpacity(0.1), // Optional, subtle shadow effect
+                blurRadius: 8.0, // Slight blur for a soft effect
+                offset: Offset(0, 4), // Shadow offset
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: GlassmorphicContainer(
+                  width: screenWidth * 0.9,
+                  height: screenHeight * 0.9,
+                  borderRadius: 0,
+                  blur: 100,
+                  alignment: Alignment.bottomCenter,
+                  border: 0,
+                  linearGradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color.fromARGB(255, 244, 239, 239).withOpacity(0.1),
+                      Color.fromARGB(255, 236, 236, 238).withOpacity(0.05),
+                    ],
+                    stops: [0.1, 1],
+                  ),
+                  borderGradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color.fromARGB(255, 248, 245, 245).withOpacity(0.1),
+                      Color.fromARGB(255, 245, 244, 247).withOpacity(0.05),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.only(top: screenHeight * 0.1),
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        Container(
+                          child: CircleAvatar(
+                            radius: screenWidth * 0.4, // Adjust size as needed
+                            backgroundImage: NetworkImage(
+                                'https://wac-cdn.atlassian.com/dam/jcr:ba03a215-2f45-40f5-8540-b2015223c918/Max-R_Headshot%20(1).jpg?cdnVersion=2449'), // Add your image URL here
+                            backgroundColor: Colors
+                                .transparent, // Optional, if you want a transparent background
+                          ),
+                        ),
+                        SizedBox(
+                          height: screenHeight / 30,
+                        ),
+                        Center(
+                          child: Text(
+                            'Hello $userName',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: screenHeight / 20,
+                        ),
+                        Divider(),
+                        _buildDrawerItem(0, Icons.shopping_bag, 'Mixing Orders'),
+                      _buildDrawerItem(1, Icons.add_box, 'Create Mixing Order'),
+                      _buildDrawerItem(2, Icons.assessment, 'Assessment'),
+                      
+                        Divider(),
+                        ListTile(
+                          leading: Icon(Icons.logout, color: Colors.redAccent),
+                          title: Text('Logout',
+                              style: TextStyle(color: Colors.white)),
+                          onTap: () {
+                            // Add your logout logic here
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: Stack(
+        children: [
+          // Full glass effect background
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+            child: Container(
+              color: Colors.black.withOpacity(0), // Transparent background
+            ),
+          ),
+          IndexedStack(
+            index: _currentIndexMainDrawer,
+            children: _pages,
+          ),
+        ],
+      ),
+      bottomNavigationBar: _currentIndexMainDrawer < 2
+          ? AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+              child: GlassmorphicBottomBar(
+                currentIndex: _currentIndexMainDrawer,
+                onTap: (index) {
+                  setState(() {
+                    _currentIndexMainDrawer = index;
+                  });
+                },
+              ),
+            )
+          : Container(),
+    );
+  }
+  
+}
+
+class AssessmentPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        "Assessment Page Content",
+        style: TextStyle(fontSize: 20),
+      ),
     );
   }
 }
